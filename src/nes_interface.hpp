@@ -13,31 +13,84 @@ namespace nes {
 #define NES_SCREEN_WIDTH 256
 
 // Number of normal game actions we want to test.
-#define NUM_NES_LEGAL_ACTIONS 15
+//#define NUM_NES_LEGAL_ACTIONS 15
 
 // The amount of change in the position above which we disregard.
 #define MAX_ALLOWED_X_CHANGE 100
 
 // Define possible actions
-#define ACT_NOOP      0  // 0
-#define ACT_A         1  // 1
-#define ACT_B	      2  // 2
-#define ACT_UP        3  // 16
-#define ACT_RIGHT     4  // 128
-#define ACT_LEFT      5  // 64
-#define ACT_DOWN      6  // 32
-#define ACT_A_UP      7  // 17
-#define ACT_A_RIGHT   8  // 129
-#define ACT_A_LEFT    9  // 65
-#define ACT_A_DOWN    10 // 33
-#define ACT_B_UP      11 // 18
-#define ACT_B_RIGHT   12 // 130
-#define ACT_B_LEFT    13 // 66
-#define ACT_B_DOWN    14 // 34
-#define ACT_RESET     15 // note: we use SYSTEM_RESET instead to reset the environment.
-#define ACT_UNDEFINED 16
-#define ACT_RANDOM    17
-#define ACT_SELECT    18 // 8
+#define ACT_NOOP            0  // 0
+#define ACT_A               1  // 1
+#define ACT_B	            2  // 2
+#define ACT_SELECT          3  // probably 4
+#define ACT_START           4  // 8
+#define ACT_UP              5  // 16
+#define ACT_DOWN            6  // 32
+#define ACT_LEFT            7  // 64
+#define ACT_RIGHT           8  // 128
+#define ACT_UP_LEFT         9  // 80
+#define ACT_UP_RIGHT        10 // 144
+#define ACT_DOWN_LEFT       11 // 96
+#define ACT_DOWN_RIGHT      12 // 160
+#define ACT_A_UP            13 // 17
+#define ACT_A_DOWN          14 // 33
+#define ACT_A_LEFT          15 // 65
+#define ACT_A_RIGHT         16 // 129
+#define ACT_A_UP_LEFT       17 // 81
+#define ACT_A_UP_RIGHT      18 // 145
+#define ACT_A_DOWN_LEFT     19 // 97
+#define ACT_A_DOWN_RIGHT    20 // 161
+#define ACT_B_UP            21 // 18
+#define ACT_B_DOWN          22 // 34
+#define ACT_B_LEFT          23 // 66
+#define ACT_B_RIGHT         24 // 130
+#define ACT_B_UP_LEFT       25 // 82
+#define ACT_B_UP_RIGHT      26 // 146
+#define ACT_B_DOWN_LEFT     27 // 98
+#define ACT_B_DOWN_RIGHT    28 // 162
+#define ACT_A_B             29 // 3
+#define ACT_A_B_UP          30 // 19
+#define ACT_A_B_DOWN        31 // 35
+#define ACT_A_B_LEFT        32 // 67
+#define ACT_A_B_RIGHT       33 // 132
+#define ACT_A_B_UP_LEFT     34 // 83
+#define ACT_A_B_UP_RIGHT    35 // 147
+#define ACT_A_B_DOWN_LEFT   36 // 99
+#define ACT_A_B_DOWN_RIGHT  37 // 163
+#define ACT_RESET           38 // note: we use SYSTEM_RESET instead to reset the environment.
+#define ACT_UNDEFINED       39
+#define ACT_RANDOM          40
+
+/*
+//value to send to NES input for each action:
+int mappedActions[38] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 144, 96, 160,
+ 17, 33, 65, 129, 81, 145, 97, 161, 18, 34, 66, 130, 82, 146, 98, 162, 3
+ 19, 35, 67, 132, 83, 147, 99, 163};
+
+// allowed actions for each game:
+std::vector <int> <std::vector<int>> allowedActions;
+// set game based on title:
+std::map<std::string, int> allowedGames;
+*/
+
+#define BALLOON_FIGHT               0
+#define BREAKTHRU                   1
+#define BUMP_N_JUMP                 2
+#define CONTRA                      3
+#define DOUBLE_DRAGON               4
+#define GALAGA                      5
+#define GRADIUS                     6
+#define GUNSMOKE                    7
+#define HUDSONS_ADVENTURE_ISLAND    8
+#define JOUST                       9
+#define KUNGFU                      10
+#define LIFEFORCE                   11
+#define MACH_RIDER                  12
+#define PUNCH_OUT                   13
+#define RAD_RACER                   14
+#define RAMPAGE                     15
+#define SPY_HUNTER                  16
+
 
 typedef unsigned char byte_t;
 typedef unsigned char pixel_t;

@@ -105,6 +105,15 @@ class NESInterface::Impl {
         int remaining_lives;
         int game_state;
         int episode_frame_number;
+
+        //TODO: initialize everything
+        int curGame;
+        int mappedActions[] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 
+        	144, 96, 160, 17, 33, 65, 129, 81, 145, 97, 161, 18, 34,
+        	66, 130, 82, 146, 98, 162, 3, 19, 35, 67, 132, 83, 147,
+        	 99, 163};
+        std::vector <int> <std::vector<int>> allowedActions;
+        std::map<std::string, int> allowedGames;
 };
 
 
@@ -128,7 +137,7 @@ bool NESInterface::Impl::game_over() {
 	// Update game state.
 	game_state = FCEU_CheatGetByte(0x0770);
 
-	// Return true only if this byte is 1.
+	// Return true only if this byte is not 1.
 	if (game_state == 1) return false;
 
 	// Reset the score and position.
@@ -229,27 +238,14 @@ int NESInterface::Impl::getFrameNumber() const {
 }
 
 int NESInterface::Impl::getNumLegalActions() {
-	return NUM_NES_LEGAL_ACTIONS;
+	return allowedActions[curGame].size();
 }
 
 void NESInterface::Impl::getLegalActionSet(int legal_actions[]) {
     
-	// All the things you can do in SMB...
-	legal_actions[0] = ACT_NOOP;
-	legal_actions[1] = ACT_A;
-	legal_actions[2] = ACT_B;
-	legal_actions[3] = ACT_UP;
-	legal_actions[4] = ACT_RIGHT;
-	legal_actions[5] = ACT_LEFT;
-	legal_actions[6] = ACT_DOWN;
-	legal_actions[7] = ACT_A_UP;
-	legal_actions[8] = ACT_A_RIGHT;
-	legal_actions[9] = ACT_A_LEFT;
-	legal_actions[10] = ACT_A_DOWN;
-	legal_actions[11] = ACT_B_UP;
-	legal_actions[12] = ACT_B_RIGHT;
-	legal_actions[13] = ACT_B_LEFT;
-	legal_actions[14] = ACT_B_DOWN;
+	for(int i=0; i<allowedActions[curGame].size(); i++){
+		legal_actions[i] = allowedActions[curGame][i];
+	}
 }
 
 int NESInterface::Impl::minReward() const {
@@ -276,6 +272,288 @@ const int NESInterface::Impl::getCurrentScore() const {
 	return current_game_score;
 }
 
+int NESInterface::Impl::getLives(){
+	int lives = 0;
+
+	switch(curGame){
+		case BALLOON_FIGHT:
+			lives = FCEU_CheatGetByte(0x0041);
+		break;
+		case BREAKTHRU:
+			lives = FCEU_CheatGetByte(0x00b2);
+		break;
+		case BUMP_N_JUMP:
+			lives = FCEU_CheatGetByte(0x004d);
+		break;
+		case CONTRA:
+			lives = FCEU_CheatGetByte(0x0032);
+		break;
+		case DOUBLE_DRAGON:
+			lives = FCEU_CheatGetByte(0x0043);
+		break;
+		case GALAGA:
+			lives = FCEU_CheatGetByte(0x0485);
+		break;
+		case GRADIUS:
+			lives = FCEU_CheatGetByte(0x0020);
+		break;
+		case GUNSMOKE:
+			lives = FCEU_CheatGetByte(0x007a);
+		break;
+		case HUDSONS_ADVENTURE_ISLAND:
+			lives = FCEU_CheatGetByte(0x003f);
+		break;
+		case JOUST:
+			lives = FCEU_CheatGetByte(0x00e9);
+		break;
+		case KUNGFU:
+			lives = FCEU_CheatGetByte(0x005c);
+		break;
+		case LIFEFORCE:
+			lives = FCEU_CheatGetByte(0x0034);
+		break;
+		case MACH_RIDER:
+			//no lives
+			lives = 0;
+		break;
+		case PUNCH_OUT:
+			//no lives
+			lives = 0;
+		break;
+		case RAD_RACER:
+			//no lives
+			lives = 0;
+		break;
+		case RAMPAGE:
+			//no lives
+			lives = 0;
+		break;
+		case SPY_HUNTER:
+			//no lives
+			lives = 0;
+		break;
+	}
+
+
+	return lives;
+}
+
+//if gamestate equals 1: game not on gameover
+
+int NESInterface::Impl::getGameState(){
+	int gameState=0;
+
+	switch(curGame){
+		case BALLOON_FIGHT:
+			gameState = FCEU_CheatGetByte(0x0041);
+			gameState = (gameState == -1)?0:1;
+		break;
+		case BREAKTHRU:
+			gameState = FCEU_CheatGetByte(0x00b2);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case BUMP_N_JUMP:
+			gameState = FCEU_CheatGetByte(0x004d);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case CONTRA:
+			gameState = FCEU_CheatGetByte(0x0038);
+			gameState = (gameState == 1)?0:1;
+		break;
+		case DOUBLE_DRAGON:
+			gameState = FCEU_CheatGetByte(0x0043);
+			gameState = (gameState == -1)?0:1;
+		break;
+		case GALAGA:
+			gameState = FCEU_CheatGetByte(0x0671);
+			gameState = (gameState == -2)?0:1;
+		break;
+		case GRADIUS: //TODO: doublecheck memory behavior
+			gameState = FCEU_CheatGetByte(0x0020);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case GUNSMOKE:
+			gameState = FCEU_CheatGetByte(0x007a);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case HUDSONS_ADVENTURE_ISLAND:
+			int aux = FCEU_CheatGetByte(0x003f);
+			gameState =  FCEU_CheatGetByte(0x0048);
+			gameState = (gameState == aux && gameState == 1)?0:1;
+		break;
+		case JOUST:
+			gameState = FCEU_CheatGetByte(0x00e4);
+			gameState = (gameState == 1)?0:1;
+		break;
+		case KUNGFU:
+			gameState = FCEU_CheatGetByte(0x005c);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case LIFEFORCE:
+			gameState = FCEU_CheatGetByte(0x003b);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case MACH_RIDER:
+			gameState = FCEU_CheatGetByte(0x0023);
+			gameState = (gameState == 0)?0:1;
+		break;
+		case PUNCH_OUT:
+			gameState = FCEU_CheatGetByte(0x0004);
+			gameState = (gameState == 1)?0:1;
+		break;
+		case RAD_RACER:
+			gameState = FCEU_CheatGetByte(0x00ba);
+			gameState = (gameState == 115)?0:1;
+		break;
+		case RAMPAGE:
+			gameState = FCEU_CheatGetByte(0x0101);
+			gameState = (gameState == 2)?0:1;
+		break;
+		case SPY_HUNTER:
+			gameState = FCEU_CheatGetByte(0x00f0);
+			gameState = (gameState == 85)?0:1;
+		break;
+	}
+
+	return gameState;
+}
+
+int NESInterface::Impl::getPoints(){
+	int points = 0;
+	switch(curGame){
+		case BALLOON_FIGHT:
+			points = (FCEU_CheatGetByte(0x0007) * 100000) +
+				(FCEU_CheatGetByte(0x0006) * 10000) +
+				(FCEU_CheatGetByte(0x0005) * 1000) +
+				(FCEU_CheatGetByte(0x0004) * 100) +
+				(FCEU_CheatGetByte(0x0003) * 10) +
+				(FCEU_CheatGetByte(0x0002) * 1);
+		break;
+		case BREAKTHRU:
+			points = (FCEU_CheatGetByte(0x0091) * 100000) +
+				(FCEU_CheatGetByte(0x0092) * 10000) +
+				(FCEU_CheatGetByte(0x0093) * 1000) +
+				(FCEU_CheatGetByte(0x0094) * 100) +
+				(FCEU_CheatGetByte(0x0095) * 10) +
+				(FCEU_CheatGetByte(0x0096) * 1);
+		break;
+		case BUMP_N_JUMP:
+			points = (FCEU_CheatGetByte(0x0053) * 100000) +
+				(FCEU_CheatGetByte(0x0052) * 10000) +
+				(FCEU_CheatGetByte(0x0051) * 1000) +
+				(FCEU_CheatGetByte(0x0050) * 100) +
+				(FCEU_CheatGetByte(0x004f) * 10) +
+				(FCEU_CheatGetByte(0x004e) * 1);
+		break;
+		case CONTRA:
+			points = (FCEU_CheatGetByte(0x07e5) << 6) +
+				(FCEU_CheatGetByte(0x07e4) << 4) +
+				(FCEU_CheatGetByte(0x07e3) << 2) +
+				(FCEU_CheatGetByte(0x07e2));
+		break;
+		case DOUBLE_DRAGON:
+			points = (FCEU_CheatGetByte(0x0040) * 1600) +
+				(FCEU_CheatGetByte(0x0042) * 160) +
+				(FCEU_CheatGetByte(0x0041) );
+			points=points*50/32;
+		break;
+		case GALAGA:
+			points = (FCEU_CheatGetByte(0x00e0) * 1000000) +
+				(FCEU_CheatGetByte(0x00e1) * 100000) +
+				(FCEU_CheatGetByte(0x00e2) * 10000) +
+				(FCEU_CheatGetByte(0x00e3) * 1000) +
+				(FCEU_CheatGetByte(0x00e4) * 100) +
+				(FCEU_CheatGetByte(0x00e5) * 10) +
+				(FCEU_CheatGetByte(0x00e6) * 1);
+		break;
+		case GRADIUS: //NEEDS TO BE CHECKED AGAIN
+
+		break;
+		case GUNSMOKE:
+			points = ((FCEU_CheatGetByte(0x06f2)-88) * 100000) +
+				((FCEU_CheatGetByte(0x06f4)-88) * 10000) +
+				((FCEU_CheatGetByte(0x06f6)-88) * 1000) +
+				((FCEU_CheatGetByte(0x06f8)-88) * 100) +
+				((FCEU_CheatGetByte(0x06fa)-88) * 10) +
+				((FCEU_CheatGetByte(0x06fc)-88) * 1);
+		break;
+		case HUDSONS_ADVENTURE_ISLAND:
+			points = (((FCEU_CheatGetByte(0x069b)+11)==-1?0:(FCEU_CheatGetByte(0x069b)+11)) * 10000000) +
+				(((FCEU_CheatGetByte(0x069c)+11)==-1?0:(FCEU_CheatGetByte(0x069c)+11)) * 1000000) +
+				(((FCEU_CheatGetByte(0x069d)+11)==-1?0:(FCEU_CheatGetByte(0x069d)+11)) * 100000) +
+				(((FCEU_CheatGetByte(0x069e)+11)==-1?0:(FCEU_CheatGetByte(0x069e)+11)) * 10000) +
+				(((FCEU_CheatGetByte(0x069f)+11)==-1?0:(FCEU_CheatGetByte(0x069f)+11)) * 1000) +
+				(((FCEU_CheatGetByte(0x06a0)+11)==-1?0:(FCEU_CheatGetByte(0x06a0)+11)) * 100) +
+				(((FCEU_CheatGetByte(0x06a1)+11)==-1?0:(FCEU_CheatGetByte(0x06a1)+11)) * 10) +
+				(((FCEU_CheatGetByte(0x06a2)+11)==-1?0:(FCEU_CheatGetByte(0x06a2)+11))* 1);
+		break;
+		case JOUST:
+			points = (FCEU_CheatGetByte(0x00ed)/16 * 100000) +
+				(FCEU_CheatGetByte(0x00ed)%16 * 10000) +
+				(FCEU_CheatGetByte(0x00ec)/16 * 1000) +
+				(FCEU_CheatGetByte(0x00ec)%16 * 100) +
+				(FCEU_CheatGetByte(0x00eb)/16 * 10) +
+				(FCEU_CheatGetByte(0x00eb)%16 * 1);
+		break;
+		case KUNGFU:
+			points = (FCEU_CheatGetByte(0x0531) * 1000000) +
+				(FCEU_CheatGetByte(0x0532) * 10000) +
+				(FCEU_CheatGetByte(0x0533) * 100) +
+				(FCEU_CheatGetByte(0x0534) * 1);
+		break;
+		case LIFEFORCE:
+			points = (FCEU_CheatGetByte(0x00e6)/16 * 100000) +
+				(FCEU_CheatGetByte(0x00e6)%16 * 10000) +
+				(FCEU_CheatGetByte(0x00e5)/16 * 1000) +
+				(FCEU_CheatGetByte(0x00e5)%16 * 100) +
+				(FCEU_CheatGetByte(0x00e4)/16 * 10) +
+				(FCEU_CheatGetByte(0x00e4)%16 * 1);
+		break;
+		case MACH_RIDER:
+			points = (FCEU_CheatGetByte(0x0000) * 10000) +
+				(FCEU_CheatGetByte(0x0001) * 1000) +
+				(FCEU_CheatGetByte(0x0002) * 100) +
+				(FCEU_CheatGetByte(0x0003) * 10) +
+				(FCEU_CheatGetByte(0x0004) * 1);
+		
+		break;
+		case PUNCH_OUT:
+			points = (FCEU_CheatGetByte(0x03e8) * 100000) +
+				(FCEU_CheatGetByte(0x03e9) * 10000) +
+				(FCEU_CheatGetByte(0x03ea) * 1000) +
+				(FCEU_CheatGetByte(0x03eb) * 100) +
+				(FCEU_CheatGetByte(0x03ec) * 10) +
+				(FCEU_CheatGetByte(0x03ed) * 1);
+		break;
+		case RAD_RACER:
+			points = ((FCEU_CheatGetByte(0x0563)-48) * 10000) +
+				((FCEU_CheatGetByte(0x0564)-48) * 1000) +
+				((FCEU_CheatGetByte(0x0565)-48) * 100) +
+				((FCEU_CheatGetByte(0x0566)-48) * 10) +
+				((FCEU_CheatGetByte(0x0567)-48) * 1);
+		break;
+		case RAMPAGE:
+			points = (FCEU_CheatGetByte(0x0119)<0)?0:(FCEU_CheatGetByte(0x0119) * 10000000) +
+				(FCEU_CheatGetByte(0x011a)<0)?0:(FCEU_CheatGetByte(0x011a) * 1000000)) +
+				(FCEU_CheatGetByte(0x011b)<0)?0:(FCEU_CheatGetByte(0x011b) * 100000)) +
+				(FCEU_CheatGetByte(0x011c)<0)?0:(FCEU_CheatGetByte(0x011c) * 10000)) +
+				(FCEU_CheatGetByte(0x011d)<0)?0:(FCEU_CheatGetByte(0x011d) * 1000)) +
+				(FCEU_CheatGetByte(0x011e)<0)?0:(FCEU_CheatGetByte(0x011e) * 100)) +
+				(FCEU_CheatGetByte(0x011f)<0)?0:(FCEU_CheatGetByte(0x011f) * 10)) +
+				(FCEU_CheatGetByte(0x0120)<0)?0:(FCEU_CheatGetByte(0x0120) * 1));
+		break;
+		case SPY_HUNTER:
+			points = (FCEU_CheatGetByte(0x0123) * 100000) +
+				(FCEU_CheatGetByte(0x0124) * 10000) +
+				(FCEU_CheatGetByte(0x0125) * 1000) +
+				(FCEU_CheatGetByte(0x0126) * 100) +
+				(FCEU_CheatGetByte(0x0127) * 10) +
+				(FCEU_CheatGetByte(0x0128) * 1);
+		break;
+	}
+	return points;
+}
+
 int NESInterface::Impl::act(int action) {
 
 	// Calculate lives.
@@ -284,78 +562,8 @@ int NESInterface::Impl::act(int action) {
 	// Update game state.
 	game_state = FCEU_CheatGetByte(0x0770);
 
-	// Set the action. No idea whether this will work with other input configurations!
-	switch (action) {
-
-		case ACT_NOOP:
-			nes_input = 0;
-			break;
-
-		case ACT_A:
-			nes_input = 1;
-			break;
-
-		case ACT_B:
-			nes_input = 2;
-			break;
-
-		case ACT_UP:
-			nes_input = 16;
-			break;
-
-		case ACT_RIGHT:
-			nes_input = 128;
-			break;
-
-		case ACT_LEFT:
-			nes_input = 64;
-			break;
-
-		case ACT_DOWN:
-			nes_input = 32;
-			break;
-
-		case ACT_A_UP:
-			nes_input = 17;
-			break;
-
-		case ACT_A_RIGHT:
-			nes_input = 129;
-			break;
-
-		case ACT_A_LEFT:
-			nes_input = 65;
-			break;
-
-		case ACT_A_DOWN:
-			nes_input = 33;
-			break;
-
-		case ACT_B_UP:
-			nes_input = 18;
-			break;
-
-		case ACT_B_RIGHT:
-			nes_input = 130;
-			break;
-
-		case ACT_B_LEFT:
-			nes_input = 66;
-			break;
-
-		case ACT_B_DOWN:
-			nes_input = 34;
-			break;
-
-		case ACT_SELECT:
-			nes_input = 8;
-			break;
-
-		default:
-			nes_input = 0;
-			printf("ERROR: Undefined action sent to nes_act!");
-			break;
-	}
+	//TODO: check for invalid input
+	nes_input = mappedActions[action];
 
 	uint8 *gfx;
 	int32 *sound;
@@ -403,6 +611,367 @@ int NESInterface::Impl::act(int action) {
 	return reward;
 }
 
+void NESInterface::Impl::initializeGamesData(){
+
+	//BALLOON FIGHT
+	allowedGames["balloon.zip"] = BALLOON_FIGHT;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT
+	});
+
+	//BREAKTHRU
+	allowedGames["breakthru.zip"] = BREAKTHRU;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	    ACT_A,
+	    ACT_A_UP,
+	    ACT_A_DOWN
+	});
+
+	//BUMP N JUMP
+	allowedGames["bumpnjump.zip"] = BUMP_N_JUMP;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT,
+	    ACT_A_DOWN,
+	    ACT_A_UP,
+	    ACT_A_UP_RIGHT,
+	    ACT_A_UP_LEFT,
+	    ACT_A_DOWN_RIGHT,
+	    ACT_A_DOWN_LEFT
+	});
+
+	//CONTRA
+	allowedGames["contra.zip"] = CONTRA;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT
+	});
+
+	//DOUBLE DRAGON
+	allowedGames["doubledragon.zip"] = DOUBLE_DRAGON;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_A,
+	    ACT_A_B,
+	    ACT_A_B_LEFT,
+	    ACT_A_B_RIGHT
+	});
+
+	//GALAGA
+	allowedGames["galaga.zip"] = GALAGA;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT
+	});
+
+	//GRADIUS
+	allowedGames["gradius.zip"] = GRADIUS;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT,
+	    ACT_A_DOWN,
+	    ACT_A_UP,
+	    ACT_A_UP_RIGHT,
+	    ACT_A_UP_LEFT,
+	    ACT_A_DOWN_RIGHT,
+	    ACT_A_DOWN_LEFT
+	});
+
+	//GUNSMOKE
+	allowedGames["gunsmoke.zip"] = GUNSMOKE;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT,
+	    ACT_A_DOWN,
+	    ACT_A_UP,
+	    ACT_A_UP_RIGHT,
+	    ACT_A_UP_LEFT,
+	    ACT_A_DOWN_RIGHT,
+	    ACT_A_DOWN_LEFT,
+	    ACT_A_B,
+	    ACT_A_B_LEFT,
+	    ACT_A_B_RIGHT,
+	    ACT_A_B_DOWN,
+	    ACT_A_B_UP,
+	    ACT_A_B_DOWN_RIGHT,
+	    ACT_A_B_DOWN_LEFT,
+	    ACT_A_B_UP_RIGHT,
+	    ACT_A_B_UP_LEFT
+	});
+
+	//HUDSONS ADVENTURE ISLAND
+	allowedGames["hudsons.zip"] = HUDSONS_ADVENTURE_ISLAND;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT
+	});
+
+	//JOUST
+	allowedGames["joust.zip"] = JOUST;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT
+	});
+
+	//KUNGFU
+	allowedGames["kungfu.zip"] = KUNGFU;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_B,
+	    ACT_A
+	});
+
+	//LIFEFORCE
+	allowedGames["lifeforce.zip"] = LIFEFORCE;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT,
+	    ACT_A_DOWN,
+	    ACT_A_UP,
+	    ACT_A_UP_RIGHT,
+	    ACT_A_UP_LEFT,
+	    ACT_A_DOWN_RIGHT,
+	    ACT_A_DOWN_LEFT
+	});
+
+	//MACH RIDER
+	allowedGames["machrider.zip"] = MACH_RIDER;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT
+	});
+
+	//PUNCH-OUT
+	allowedGames["punchout.zip"] = PUNCH_OUT;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_DOWN,
+	    ACT_B,
+	    ACT_B_UP,
+	    ACT_A,
+	    ACT_A_UP,
+	    ACT_START //to proceed after round intermission
+	});
+
+	//RAD RACER
+	allowedGames["radracer.zip"] = RAD_RACER;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT,
+	    ACT_A_UP
+	});
+
+	//RAMPAGE
+	allowedGames["rampage.zip"] = RAMPAGE;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_B,
+	    ACT_A,
+	    ACT_A_LEFT,
+	    ACT_A_RIGHT,
+	    ACT_A_UP,
+	    ACT_A_DOWN
+	});
+
+	//SPY HUNTER
+	allowedGames["spyhunter.zip"] = SPY_HUNTER;
+	allowedActions.push_back(std::vector<int> {
+	    ACT_NOOP,
+	    ACT_LEFT,
+	    ACT_RIGHT,
+	    ACT_UP,
+	    ACT_DOWN,
+	    ACT_DOWN_RIGHT,
+	    ACT_DOWN_LEFT,
+	    ACT_UP_LEFT,
+	    ACT_UP_RIGHT,
+	    ACT_B,
+	    ACT_B_LEFT,
+	    ACT_B_RIGHT,
+	    ACT_B_UP,
+	    ACT_B_DOWN,
+	    ACT_B_DOWN_RIGHT,
+	    ACT_B_DOWN_LEFT,
+	    ACT_B_UP_RIGHT,
+	    ACT_B_UP_LEFT,
+	});
+
+}
+
 NESInterface::Impl::Impl(const std::string &rom_file) :
     m_episode_score(0),
     m_display_active(false),
@@ -413,6 +982,11 @@ NESInterface::Impl::Impl(const std::string &rom_file) :
 	game_state(0),
 	episode_frame_number(0)
 {
+	NESInterface::Impl::initializeGamesData();
+
+	//TODO: error handling
+	//		check name of file, probably ".zip" added, or maybe even fullpath
+	curGame = allowedGames[rom_file];
 
 	// Initialize some configuration variables.
 	static int inited = 0;
