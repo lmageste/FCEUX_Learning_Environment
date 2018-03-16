@@ -101,7 +101,7 @@ class NESInterface::Impl {
         int m_max_num_frames;     // Maximum number of frames for each episode
         int nes_input; // Input to the emulator.
         int current_game_score;
-        int current_x;
+        //int current_x;
         int remaining_lives;
         int game_state;
         int episode_frame_number;
@@ -142,7 +142,7 @@ bool NESInterface::Impl::game_over() {
 
 	// Reset the score and position.
 	current_game_score = 0;
-	current_x = 0;
+	//current_x = 0;
 	return true;
 }
 
@@ -153,7 +153,7 @@ void NESInterface::Impl::reset_game() {
 
 	// Initialize the score,position, and frame counter.
 	current_game_score = 0;
-	current_x = 0;
+	//current_x = 0;
 	episode_frame_number = 0;
 
 	// Run a few frames first to get to the startup screen.
@@ -557,13 +557,15 @@ int NESInterface::Impl::getPoints(){
 int NESInterface::Impl::act(int action) {
 
 	// Calculate lives.
-	remaining_lives = FCEU_CheatGetByte(0x075a);
+	remaining_lives = getLives();
+	//remaining_lives = FCEU_CheatGetByte(0x075a);
 
 	// Update game state.
-	game_state = FCEU_CheatGetByte(0x0770);
+	game_state = getGameState();
+	//game_state = FCEU_CheatGetByte(0x0770);
 
 	//TODO: check for invalid input
-	nes_input = mappedActions[action];
+	nes_input = allowedActions[action];
 
 	uint8 *gfx;
 	int32 *sound;
@@ -576,13 +578,17 @@ int NESInterface::Impl::act(int action) {
 	FCEUD_Update(gfx, sound, ssize);
 
 	// Get score...
-	int new_score = (FCEU_CheatGetByte(0x07dd) * 1000000) +
+	int new_score =  getPoints();
+	/*
+	(FCEU_CheatGetByte(0x07dd) * 1000000) +
 			(FCEU_CheatGetByte(0x07de) * 100000) +
 			(FCEU_CheatGetByte(0x07df) * 10000) +
 			(FCEU_CheatGetByte(0x07e0) * 1000) +
 			(FCEU_CheatGetByte(0x07e1) * 100) +
 			(FCEU_CheatGetByte(0x07e2) * 10);
+	*/
 
+	/*
 	// Calculate the change in x (this is the x position on the screen, not in the level).
 	int new_x = FCEU_CheatGetByte(0x0086);
 	int deltaX = new_x - current_x;
@@ -594,6 +600,7 @@ int NESInterface::Impl::act(int action) {
 		current_x = 0;
 	} 
         current_x = new_x;
+	*/
 
 	// Calculate the reward based on score.
 	int reward = new_score - current_game_score;
@@ -606,7 +613,7 @@ int NESInterface::Impl::act(int action) {
 
 	// Add reward based on position.
         // Oh wow - now sure we want to do this :(
-	reward = reward + deltaX;
+	//reward = reward + deltaX;
 
 	return reward;
 }
@@ -977,7 +984,7 @@ NESInterface::Impl::Impl(const std::string &rom_file) :
     m_display_active(false),
 	nes_input(0),
 	current_game_score(0),
-	current_x(0),
+	//current_x(0),
 	remaining_lives(0),
 	game_state(0),
 	episode_frame_number(0)

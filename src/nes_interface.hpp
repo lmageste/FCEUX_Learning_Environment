@@ -16,7 +16,7 @@ namespace nes {
 //#define NUM_NES_LEGAL_ACTIONS 15
 
 // The amount of change in the position above which we disregard.
-#define MAX_ALLOWED_X_CHANGE 100
+//#define MAX_ALLOWED_X_CHANGE 100
 
 // Define possible actions
 #define ACT_NOOP            0  // 0
