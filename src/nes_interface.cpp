@@ -96,6 +96,12 @@ class NESInterface::Impl {
         // Get the RGB data from the raw screen.
         void fillRGBfromPalette(unsigned char *raw_screen, unsigned char *rgb_screen, int raw_screen_size);
 
+	//new-created functions for multiple games
+	int getGameState();
+	int getLives();
+	int getPoints();
+	void initializeGamesData();
+
     private:
 
         int m_episode_score; // Score accumulated throughout the course of an episode
@@ -114,7 +120,7 @@ class NESInterface::Impl {
         	144, 96, 160, 17, 33, 65, 129, 81, 145, 97, 161, 18, 34,
         	66, 130, 82, 146, 98, 162, 3, 19, 35, 67, 132, 83, 147,
         	 99, 163};
-        std::vector<int> <std::vector<int> > allowedActions;
+        std::vector<std::vector<int> > allowedActions;
         std::map<std::string, int> allowedGames;
 };
 
@@ -559,11 +565,11 @@ int NESInterface::Impl::getPoints(){
 int NESInterface::Impl::act(int action) {
 
 	// Calculate lives.
-	remaining_lives = getLives();
+	remaining_lives = NESInterface::Impl::getLives();
 	//remaining_lives = FCEU_CheatGetByte(0x075a);
 
 	// Update game state.
-	game_state = getGameState();
+	game_state = NESInterface::Impl::getGameState();
 	//game_state = FCEU_CheatGetByte(0x0770);
 
 	//TODO: check for invalid input
@@ -580,7 +586,7 @@ int NESInterface::Impl::act(int action) {
 	FCEUD_Update(gfx, sound, ssize);
 
 	// Get score...
-	int new_score =  getPoints();
+	int new_score =  NESInterface::Impl::getPoints();
 	/*
 	(FCEU_CheatGetByte(0x07dd) * 1000000) +
 			(FCEU_CheatGetByte(0x07de) * 100000) +
