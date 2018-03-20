@@ -171,7 +171,8 @@ void NESInterface::Impl::reset_game() {
 
 	// Hit the start button...
 	for (int i = 0; i<10; i++) {
-		NESInterface::Impl::act(ACT_SELECT);
+		NESInterface::Impl::act(ACT_START);
+		printf("acted start\n");
 	}
 }
 
@@ -569,6 +570,8 @@ int NESInterface::Impl::getPoints(){
 }
 
 int NESInterface::Impl::act(int action) {
+
+	printf("acted %d\n", action);
 
 	// Calculate lives.
 	remaining_lives = NESInterface::Impl::getLives();
