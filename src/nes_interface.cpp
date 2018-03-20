@@ -6,6 +6,8 @@
 #include "cheat.h"
 #include "video.h"
 #include <stdio.h>
+#include <vector>
+#include <map>
 #include <SDL/SDL.h>
 
 // Global configuration info.
@@ -108,11 +110,11 @@ class NESInterface::Impl {
 
         //TODO: initialize everything
         int curGame;
-        int mappedActions[] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 
+        int mappedActions[38] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 
         	144, 96, 160, 17, 33, 65, 129, 81, 145, 97, 161, 18, 34,
         	66, 130, 82, 146, 98, 162, 3, 19, 35, 67, 132, 83, 147,
         	 99, 163};
-        std::vector <int> <std::vector<int>> allowedActions;
+        std::vector<int> <std::vector<int> > allowedActions;
         std::map<std::string, int> allowedGames;
 };
 
