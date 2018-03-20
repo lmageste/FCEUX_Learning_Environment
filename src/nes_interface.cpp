@@ -116,11 +116,11 @@ class NESInterface::Impl {
 
         //TODO: initialize everything
         int curGame;
-        int mappedActions[38] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 
+        int mappedActions[NUMBER_OF_ACTIONS] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 
         	144, 96, 160, 17, 33, 65, 129, 81, 145, 97, 161, 18, 34,
         	66, 130, 82, 146, 98, 162, 3, 19, 35, 67, 132, 83, 147,
         	 99, 163};
-        std::vector<std::vector<int> > allowedActions;
+        int allowedActions[NUMBER_OF_GAMES][NUMBER_OF_ACTIONS];
         std::map<std::string, int> allowedGames;
 };
 
@@ -246,13 +246,20 @@ int NESInterface::Impl::getFrameNumber() const {
 }
 
 int NESInterface::Impl::getNumLegalActions() {
-	return allowedActions[curGame].size();
+	int count = 0;
+	for(int i=0; i<NUMBER_OF_ACTIONS; i++){
+		if(allowedActions[curGame][i]==1)
+			count++;
+	}
+
+	return count;
 }
 
 void NESInterface::Impl::getLegalActionSet(int legal_actions[]) {
-    
-	for(int i=0; i<allowedActions[curGame].size(); i++){
-		legal_actions[i] = allowedActions[curGame][i];
+    int count =0;
+	for(int i=0; i<NUMBER_OF_ACTIONS; i++){
+		if(allowedActions[curGame][i]==1)
+			legal_actions[count] = i;
 	}
 }
 
@@ -385,9 +392,8 @@ int NESInterface::Impl::getGameState(){
 			gameState = (gameState == 0)?0:1;
 		break;
 		case HUDSONS_ADVENTURE_ISLAND:
-			int aux = FCEU_CheatGetByte(0x003f);
 			gameState =  FCEU_CheatGetByte(0x0048);
-			gameState = (gameState == aux && gameState == 1)?0:1;
+			gameState = (gameState == FCEU_CheatGetByte(0x003f) && gameState == 1)?0:1;
 		break;
 		case JOUST:
 			gameState = FCEU_CheatGetByte(0x00e4);
@@ -542,13 +548,13 @@ int NESInterface::Impl::getPoints(){
 		break;
 		case RAMPAGE:
 			points = (FCEU_CheatGetByte(0x0119)<0)?0:(FCEU_CheatGetByte(0x0119) * 10000000) +
-				(FCEU_CheatGetByte(0x011a)<0)?0:(FCEU_CheatGetByte(0x011a) * 1000000)) +
-				(FCEU_CheatGetByte(0x011b)<0)?0:(FCEU_CheatGetByte(0x011b) * 100000)) +
-				(FCEU_CheatGetByte(0x011c)<0)?0:(FCEU_CheatGetByte(0x011c) * 10000)) +
-				(FCEU_CheatGetByte(0x011d)<0)?0:(FCEU_CheatGetByte(0x011d) * 1000)) +
-				(FCEU_CheatGetByte(0x011e)<0)?0:(FCEU_CheatGetByte(0x011e) * 100)) +
-				(FCEU_CheatGetByte(0x011f)<0)?0:(FCEU_CheatGetByte(0x011f) * 10)) +
-				(FCEU_CheatGetByte(0x0120)<0)?0:(FCEU_CheatGetByte(0x0120) * 1));
+				(FCEU_CheatGetByte(0x011a)<0)?0:(FCEU_CheatGetByte(0x011a) * 1000000) +
+				(FCEU_CheatGetByte(0x011b)<0)?0:(FCEU_CheatGetByte(0x011b) * 100000) +
+				(FCEU_CheatGetByte(0x011c)<0)?0:(FCEU_CheatGetByte(0x011c) * 10000) +
+				(FCEU_CheatGetByte(0x011d)<0)?0:(FCEU_CheatGetByte(0x011d) * 1000) +
+				(FCEU_CheatGetByte(0x011e)<0)?0:(FCEU_CheatGetByte(0x011e) * 100) +
+				(FCEU_CheatGetByte(0x011f)<0)?0:(FCEU_CheatGetByte(0x011f) * 10) +
+				(FCEU_CheatGetByte(0x0120)<0)?0:(FCEU_CheatGetByte(0x0120) * 1);
 		break;
 		case SPY_HUNTER:
 			points = (FCEU_CheatGetByte(0x0123) * 100000) +
@@ -573,7 +579,7 @@ int NESInterface::Impl::act(int action) {
 	//game_state = FCEU_CheatGetByte(0x0770);
 
 	//TODO: check for invalid input
-	nes_input = allowedActions[action];
+	nes_input = allowedActions[curGame][action];
 
 	uint8 *gfx;
 	int32 *sound;
@@ -624,367 +630,6 @@ int NESInterface::Impl::act(int action) {
 	//reward = reward + deltaX;
 
 	return reward;
-}
-
-void NESInterface::Impl::initializeGamesData(){
-
-	//BALLOON FIGHT
-	allowedGames["balloon.zip"] = BALLOON_FIGHT;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT
-	});
-
-	//BREAKTHRU
-	allowedGames["breakthru.zip"] = BREAKTHRU;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	    ACT_A,
-	    ACT_A_UP,
-	    ACT_A_DOWN
-	});
-
-	//BUMP N JUMP
-	allowedGames["bumpnjump.zip"] = BUMP_N_JUMP;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT,
-	    ACT_A_DOWN,
-	    ACT_A_UP,
-	    ACT_A_UP_RIGHT,
-	    ACT_A_UP_LEFT,
-	    ACT_A_DOWN_RIGHT,
-	    ACT_A_DOWN_LEFT
-	});
-
-	//CONTRA
-	allowedGames["contra.zip"] = CONTRA;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT
-	});
-
-	//DOUBLE DRAGON
-	allowedGames["doubledragon.zip"] = DOUBLE_DRAGON;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_A,
-	    ACT_A_B,
-	    ACT_A_B_LEFT,
-	    ACT_A_B_RIGHT
-	});
-
-	//GALAGA
-	allowedGames["galaga.zip"] = GALAGA;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT
-	});
-
-	//GRADIUS
-	allowedGames["gradius.zip"] = GRADIUS;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT,
-	    ACT_A_DOWN,
-	    ACT_A_UP,
-	    ACT_A_UP_RIGHT,
-	    ACT_A_UP_LEFT,
-	    ACT_A_DOWN_RIGHT,
-	    ACT_A_DOWN_LEFT
-	});
-
-	//GUNSMOKE
-	allowedGames["gunsmoke.zip"] = GUNSMOKE;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT,
-	    ACT_A_DOWN,
-	    ACT_A_UP,
-	    ACT_A_UP_RIGHT,
-	    ACT_A_UP_LEFT,
-	    ACT_A_DOWN_RIGHT,
-	    ACT_A_DOWN_LEFT,
-	    ACT_A_B,
-	    ACT_A_B_LEFT,
-	    ACT_A_B_RIGHT,
-	    ACT_A_B_DOWN,
-	    ACT_A_B_UP,
-	    ACT_A_B_DOWN_RIGHT,
-	    ACT_A_B_DOWN_LEFT,
-	    ACT_A_B_UP_RIGHT,
-	    ACT_A_B_UP_LEFT
-	});
-
-	//HUDSONS ADVENTURE ISLAND
-	allowedGames["hudsons.zip"] = HUDSONS_ADVENTURE_ISLAND;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT
-	});
-
-	//JOUST
-	allowedGames["joust.zip"] = JOUST;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT
-	});
-
-	//KUNGFU
-	allowedGames["kungfu.zip"] = KUNGFU;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_B,
-	    ACT_A
-	});
-
-	//LIFEFORCE
-	allowedGames["lifeforce.zip"] = LIFEFORCE;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT,
-	    ACT_A_DOWN,
-	    ACT_A_UP,
-	    ACT_A_UP_RIGHT,
-	    ACT_A_UP_LEFT,
-	    ACT_A_DOWN_RIGHT,
-	    ACT_A_DOWN_LEFT
-	});
-
-	//MACH RIDER
-	allowedGames["machrider.zip"] = MACH_RIDER;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT
-	});
-
-	//PUNCH-OUT
-	allowedGames["punchout.zip"] = PUNCH_OUT;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_DOWN,
-	    ACT_B,
-	    ACT_B_UP,
-	    ACT_A,
-	    ACT_A_UP,
-	    ACT_START //to proceed after round intermission
-	});
-
-	//RAD RACER
-	allowedGames["radracer.zip"] = RAD_RACER;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT,
-	    ACT_A_UP
-	});
-
-	//RAMPAGE
-	allowedGames["rampage.zip"] = RAMPAGE;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_B,
-	    ACT_A,
-	    ACT_A_LEFT,
-	    ACT_A_RIGHT,
-	    ACT_A_UP,
-	    ACT_A_DOWN
-	});
-
-	//SPY HUNTER
-	allowedGames["spyhunter.zip"] = SPY_HUNTER;
-	allowedActions.push_back(std::vector<int> {
-	    ACT_NOOP,
-	    ACT_LEFT,
-	    ACT_RIGHT,
-	    ACT_UP,
-	    ACT_DOWN,
-	    ACT_DOWN_RIGHT,
-	    ACT_DOWN_LEFT,
-	    ACT_UP_LEFT,
-	    ACT_UP_RIGHT,
-	    ACT_B,
-	    ACT_B_LEFT,
-	    ACT_B_RIGHT,
-	    ACT_B_UP,
-	    ACT_B_DOWN,
-	    ACT_B_DOWN_RIGHT,
-	    ACT_B_DOWN_LEFT,
-	    ACT_B_UP_RIGHT,
-	    ACT_B_UP_LEFT,
-	});
-
 }
 
 NESInterface::Impl::Impl(const std::string &rom_file) :
@@ -1075,6 +720,421 @@ NESInterface::Impl::Impl(const std::string &rom_file) :
 	// Set the emulator to read from nes_input instead of the Gamepad :)
 	FCEUI_SetInput(0, (ESI) SI_GAMEPAD, &nes_input, 0);
 	FCEUI_SetInput(1, (ESI) SI_GAMEPAD, &nes_input, 0);
+}
+
+
+void NESInterface::Impl::initializeGamesData(){
+
+	allowedGames["balloon.zip"] = BALLOON_FIGHT;
+	allowedGames["breakthru.zip"] = BREAKTHRU;
+	allowedGames["bumpnjump.zip"] = BUMP_N_JUMP;
+	allowedGames["contra.zip"] = CONTRA;
+	allowedGames["doubledragon.zip"] = DOUBLE_DRAGON;
+	allowedGames["galaga.zip"] = GALAGA;
+	allowedGames["gradius.zip"] = GRADIUS;
+	allowedGames["gunsmoke.zip"] = GUNSMOKE;
+	allowedGames["hudsons.zip"] = HUDSONS_ADVENTURE_ISLAND;
+	allowedGames["joust.zip"] = JOUST;
+	allowedGames["kungfu.zip"] = KUNGFU;
+	allowedGames["lifeforce.zip"] = LIFEFORCE;
+	allowedGames["machrider.zip"] = MACH_RIDER;
+	allowedGames["punchout.zip"] = PUNCH_OUT;
+	allowedGames["radracer.zip"] = RAD_RACER;
+	allowedGames["rampage.zip"] = RAMPAGE;
+	allowedGames["spyhunter.zip"] = SPY_HUNTER;
+
+
+	for(int i=0; i<NUMBER_OF_GAMES; i++){
+		for(int j=0; j<NUMBER_OF_ACTIONS; j++){
+			switch(i){
+				case BALLOON_FIGHT:
+					if(	j == ACT_NOOP 		||
+					    j == ACT_LEFT 		||
+					    j == ACT_RIGHT 		||
+					    j == ACT_B 			||
+					    j == ACT_B_LEFT 	||
+					    j == ACT_B_RIGHT 	||
+					    j == ACT_A 			||
+					    j == ACT_A_LEFT 	||
+					    j == ACT_A_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case BREAKTHRU:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT ||
+					    j == ACT_A ||
+					    j == ACT_A_UP ||
+					    j == ACT_A_DOWN
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+
+				break;
+				case BUMP_N_JUMP:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT ||
+					    j == ACT_A_DOWN ||
+					    j == ACT_A_UP ||
+					    j == ACT_A_UP_RIGHT ||
+					    j == ACT_A_UP_LEFT ||
+					    j == ACT_A_DOWN_RIGHT ||
+					    j == ACT_A_DOWN_LEFT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case CONTRA:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case DOUBLE_DRAGON:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_A ||
+					    j == ACT_A_B ||
+					    j == ACT_A_B_LEFT ||
+					    j == ACT_A_B_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case GALAGA:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case GRADIUS: //NEEDS TO BE CHECKED AGAIN
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT ||
+					    j == ACT_A_DOWN ||
+					    j == ACT_A_UP ||
+					    j == ACT_A_UP_RIGHT ||
+					    j == ACT_A_UP_LEFT ||
+					    j == ACT_A_DOWN_RIGHT ||
+					    j == ACT_A_DOWN_LEFT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+
+				break;
+				case GUNSMOKE:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT ||
+					    j == ACT_A_DOWN ||
+					    j == ACT_A_UP ||
+					    j == ACT_A_UP_RIGHT ||
+					    j == ACT_A_UP_LEFT ||
+					    j == ACT_A_DOWN_RIGHT ||
+					    j == ACT_A_DOWN_LEFT ||
+					    j == ACT_A_B ||
+					    j == ACT_A_B_LEFT ||
+					    j == ACT_A_B_RIGHT ||
+					    j == ACT_A_B_DOWN ||
+					    j == ACT_A_B_UP ||
+					    j == ACT_A_B_DOWN_RIGHT ||
+					    j == ACT_A_B_DOWN_LEFT ||
+					    j == ACT_A_B_UP_RIGHT ||
+					    j == ACT_A_B_UP_LEFT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case HUDSONS_ADVENTURE_ISLAND:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				break;
+				case JOUST:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+					
+				break;
+				case KUNGFU:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_B ||
+					    j == ACT_A
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+					
+				break;
+				case LIFEFORCE:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT ||
+					    j == ACT_A_DOWN ||
+					    j == ACT_A_UP ||
+					    j == ACT_A_UP_RIGHT ||
+					    j == ACT_A_UP_LEFT ||
+					    j == ACT_A_DOWN_RIGHT ||
+					    j == ACT_A_DOWN_LEFT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				
+				break;
+				case MACH_RIDER:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+				
+				break;
+				case PUNCH_OUT:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_DOWN ||
+					    j == ACT_B ||
+					    j == ACT_B_UP ||
+					    j == ACT_A ||
+					    j == ACT_A_UP ||
+					    j == ACT_START //to proceed after round intermission
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+					
+				break;
+				case RAD_RACER:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT ||
+					    j == ACT_A_UP
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+					
+				break;
+				case RAMPAGE:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_B ||
+					    j == ACT_A ||
+					    j == ACT_A_LEFT ||
+					    j == ACT_A_RIGHT ||
+					    j == ACT_A_UP ||
+					    j == ACT_A_DOWN
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+			
+				break;
+				case SPY_HUNTER:
+					if(	j == ACT_NOOP ||
+					    j == ACT_LEFT ||
+					    j == ACT_RIGHT ||
+					    j == ACT_UP ||
+					    j == ACT_DOWN ||
+					    j == ACT_DOWN_RIGHT ||
+					    j == ACT_DOWN_LEFT ||
+					    j == ACT_UP_LEFT ||
+					    j == ACT_UP_RIGHT ||
+					    j == ACT_B ||
+					    j == ACT_B_LEFT ||
+					    j == ACT_B_RIGHT ||
+					    j == ACT_B_UP ||
+					    j == ACT_B_DOWN ||
+					    j == ACT_B_DOWN_RIGHT ||
+					    j == ACT_B_DOWN_LEFT ||
+					    j == ACT_B_UP_RIGHT ||
+					    j == ACT_B_UP_LEFT
+					)
+					    allowedActions[i][j] = 1;
+					else
+						allowedActions[i][j] = 0;
+					
+				break;
+			}
+		}
+	}
+
 }
 
 /* --------------------------------------------------------------------------------------------------*/

@@ -19,6 +19,8 @@ namespace nes {
 //#define MAX_ALLOWED_X_CHANGE 100
 
 // Define possible actions
+#define NUMBER_OF_ACTIONS   38 //until and excluding reset
+
 #define ACT_NOOP            0  // 0
 #define ACT_A               1  // 1
 #define ACT_B	            2  // 2
@@ -72,6 +74,8 @@ std::vector <int> <std::vector<int>> allowedActions;
 // set game based on title:
 std::map<std::string, int> allowedGames;
 */
+
+#define NUMBER_OF_GAMES             17
 
 #define BALLOON_FIGHT               0
 #define BREAKTHRU                   1
