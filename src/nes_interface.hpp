@@ -54,7 +54,7 @@ namespace nes {
 #define ACT_A_B_UP          30 // 19
 #define ACT_A_B_DOWN        31 // 35
 #define ACT_A_B_LEFT        32 // 67
-#define ACT_A_B_RIGHT       33 // 132
+#define ACT_A_B_RIGHT       33 // 131
 #define ACT_A_B_UP_LEFT     34 // 83
 #define ACT_A_B_UP_RIGHT    35 // 147
 #define ACT_A_B_DOWN_LEFT   36 // 99

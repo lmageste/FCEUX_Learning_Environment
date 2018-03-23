@@ -38,7 +38,7 @@ class NESInterface::Impl {
         void reset_game();
 
         // Indicates if the game has ended
-        bool game_over();
+        bool gameOver();
 
         // Applies an action to the game and returns the reward. It is the user's responsibility
         // to check if the game has ended and reset when necessary - this method will keep pressing
@@ -118,7 +118,7 @@ class NESInterface::Impl {
         int curGame;
         int mappedActions[NUMBER_OF_ACTIONS] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 80, 
         	144, 96, 160, 17, 33, 65, 129, 81, 145, 97, 161, 18, 34,
-        	66, 130, 82, 146, 98, 162, 3, 19, 35, 67, 132, 83, 147,
+        	66, 130, 82, 146, 98, 162, 3, 19, 35, 67, 131, 83, 147,
         	 99, 163};
         int allowedActions[NUMBER_OF_GAMES][NUMBER_OF_ACTIONS];
         std::map<std::string, int> allowedGames;
@@ -140,10 +140,10 @@ bool NESInterface::Impl::loadState() {
 	return false;
 }
 
-bool NESInterface::Impl::game_over() {
+bool NESInterface::Impl::gameOver() {
 
 	// Update game state.
-	game_state = FCEU_CheatGetByte(0x0770);
+	game_state = NESInterface::Impl::getGameState();
 
 	// Return true only if this byte is not 1.
 	if (game_state == 1) return false;
@@ -164,15 +164,53 @@ void NESInterface::Impl::reset_game() {
 	//current_x = 0;
 	episode_frame_number = 0;
 
+	printf("!!!Game Reseted: number %d\n", curGame);
+
 	// Run a few frames first to get to the startup screen.
 	for (int i = 0; i<60; i++) {
 		NESInterface::Impl::act(ACT_NOOP);
 	}
 
 	// Hit the start button...
-	for (int i = 0; i<10; i++) {
-		NESInterface::Impl::act(ACT_START);
-		printf("acted start\n");
+	for (int i = 0; i<5; i++) {
+		if(curGame == DOUBLE_DRAGON)
+			NESInterface::Impl::act(ACT_SELECT);
+		if(curGame == MACH_RIDER)
+			NESInterface::Impl::act(ACT_DOWN);
+		else
+			NESInterface::Impl::act(ACT_START);
+	}
+
+	if(curGame == LIFEFORCE){
+		for (int i = 0; i < 100; ++i)
+		{
+			NESInterface::Impl::act(ACT_NOOP);
+		}
+	}
+
+	if(curGame == CONTRA || curGame == DOUBLE_DRAGON || curGame == GALAGA ||
+		curGame == GRADIUS || curGame == HUDSONS_ADVENTURE_ISLAND ||
+		curGame == MACH_RIDER || curGame == RAMPAGE || curGame == PUNCH_OUT ||
+		curGame == RAD_RACER || curGame == SPY_HUNTER){
+		for (int i = 0; i<10; i++) {
+			NESInterface::Impl::act(ACT_NOOP);
+		}
+		for (int i = 0; i<5; i++) {
+			NESInterface::Impl::act(ACT_START);
+		}
+		if(curGame == RAD_RACER)
+			for (int i = 0; i<10; i++) {
+				NESInterface::Impl::act(ACT_NOOP);
+			}
+			for (int i = 0; i<5; i++) {
+				NESInterface::Impl::act(ACT_START);
+			}
+			for (int i = 0; i<10; i++) {
+				NESInterface::Impl::act(ACT_NOOP);
+			}
+			for (int i = 0; i<5; i++) {
+				NESInterface::Impl::act(ACT_A);
+			}
 	}
 }
 
@@ -259,8 +297,11 @@ int NESInterface::Impl::getNumLegalActions() {
 void NESInterface::Impl::getLegalActionSet(int legal_actions[]) {
     int count =0;
 	for(int i=0; i<NUMBER_OF_ACTIONS; i++){
-		if(allowedActions[curGame][i]==1)
+		if(allowedActions[curGame][i]==1){
 			legal_actions[count] = i;
+			printf("action in slot %d is %d\n", count, i);
+			count++;
+		}
 	}
 }
 
@@ -289,7 +330,7 @@ const int NESInterface::Impl::getCurrentScore() const {
 }
 
 int NESInterface::Impl::getLives(){
-	int lives = 0;
+	int lives = 0; //ok all
 
 	switch(curGame){
 		case BALLOON_FIGHT:
@@ -350,6 +391,7 @@ int NESInterface::Impl::getLives(){
 		break;
 	}
 
+	//printf("vidas valem: %d\n", lives);
 
 	return lives;
 }
@@ -357,12 +399,12 @@ int NESInterface::Impl::getLives(){
 //if gamestate equals 1: game not on gameover
 
 int NESInterface::Impl::getGameState(){
-	int gameState=0;
+	int gameState=0; //ok all
 
 	switch(curGame){
 		case BALLOON_FIGHT:
 			gameState = FCEU_CheatGetByte(0x0041);
-			gameState = (gameState == -1)?0:1;
+			gameState = (gameState == 255)?0:1;
 		break;
 		case BREAKTHRU:
 			gameState = FCEU_CheatGetByte(0x00b2);
@@ -378,19 +420,19 @@ int NESInterface::Impl::getGameState(){
 		break;
 		case DOUBLE_DRAGON:
 			gameState = FCEU_CheatGetByte(0x0043);
-			gameState = (gameState == -1)?0:1;
+			gameState = (gameState == 255)?0:1;
 		break;
 		case GALAGA:
 			gameState = FCEU_CheatGetByte(0x0671);
-			gameState = (gameState == -2)?0:1;
+			gameState = (gameState == 254)?0:1;
 		break;
-		case GRADIUS: //TODO: doublecheck memory behavior
+		case GRADIUS: 
 			gameState = FCEU_CheatGetByte(0x0020);
-			gameState = (gameState == 0)?0:1;
+			gameState = (gameState == 255)?0:1;
 		break;
 		case GUNSMOKE:
-			gameState = FCEU_CheatGetByte(0x007a);
-			gameState = (gameState == 0)?0:1;
+			gameState = FCEU_CheatGetByte(0x06a1);
+			gameState = (gameState == 49)?0:1;
 		break;
 		case HUDSONS_ADVENTURE_ISLAND:
 			gameState =  FCEU_CheatGetByte(0x0048);
@@ -405,7 +447,7 @@ int NESInterface::Impl::getGameState(){
 			gameState = (gameState == 0)?0:1;
 		break;
 		case LIFEFORCE:
-			gameState = FCEU_CheatGetByte(0x003b);
+			gameState = FCEU_CheatGetByte(0x0034);
 			gameState = (gameState == 0)?0:1;
 		break;
 		case MACH_RIDER:
@@ -413,8 +455,8 @@ int NESInterface::Impl::getGameState(){
 			gameState = (gameState == 0)?0:1;
 		break;
 		case PUNCH_OUT:
-			gameState = FCEU_CheatGetByte(0x0004);
-			gameState = (gameState == 1)?0:1;
+			gameState = FCEU_CheatGetByte(0x0173);
+			gameState = (gameState == 3)?0:1;
 		break;
 		case RAD_RACER:
 			gameState = FCEU_CheatGetByte(0x00ba);
@@ -426,9 +468,11 @@ int NESInterface::Impl::getGameState(){
 		break;
 		case SPY_HUNTER:
 			gameState = FCEU_CheatGetByte(0x00f0);
-			gameState = (gameState == 85)?0:1;
+			gameState = (gameState == 0)?0:1;
 		break;
 	}
+
+	//printf("gamestate vale %d\n", gameState);
 
 	return gameState;
 }
@@ -436,7 +480,7 @@ int NESInterface::Impl::getGameState(){
 int NESInterface::Impl::getPoints(){
 	int points = 0;
 	switch(curGame){
-		case BALLOON_FIGHT:
+		case BALLOON_FIGHT: //ok
 			points = (FCEU_CheatGetByte(0x0007) * 100000) +
 				(FCEU_CheatGetByte(0x0006) * 10000) +
 				(FCEU_CheatGetByte(0x0005) * 1000) +
@@ -444,7 +488,7 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x0003) * 10) +
 				(FCEU_CheatGetByte(0x0002) * 1);
 		break;
-		case BREAKTHRU:
+		case BREAKTHRU: //ok
 			points = (FCEU_CheatGetByte(0x0091) * 100000) +
 				(FCEU_CheatGetByte(0x0092) * 10000) +
 				(FCEU_CheatGetByte(0x0093) * 1000) +
@@ -452,7 +496,7 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x0095) * 10) +
 				(FCEU_CheatGetByte(0x0096) * 1);
 		break;
-		case BUMP_N_JUMP:
+		case BUMP_N_JUMP: //ok
 			points = (FCEU_CheatGetByte(0x0053) * 100000) +
 				(FCEU_CheatGetByte(0x0052) * 10000) +
 				(FCEU_CheatGetByte(0x0051) * 1000) +
@@ -460,19 +504,19 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x004f) * 10) +
 				(FCEU_CheatGetByte(0x004e) * 1);
 		break;
-		case CONTRA:
-			points = (FCEU_CheatGetByte(0x07e5) << 6) +
+		case CONTRA: //ok (with 10 mult factor so that each kill will be worth 10 points)
+			points = 10*((FCEU_CheatGetByte(0x07e5) << 6) +
 				(FCEU_CheatGetByte(0x07e4) << 4) +
 				(FCEU_CheatGetByte(0x07e3) << 2) +
-				(FCEU_CheatGetByte(0x07e2));
+				(FCEU_CheatGetByte(0x07e2)));
 		break;
-		case DOUBLE_DRAGON:
+		case DOUBLE_DRAGON: //ok
 			points = (FCEU_CheatGetByte(0x0040) * 1600) +
 				(FCEU_CheatGetByte(0x0042) * 160) +
 				(FCEU_CheatGetByte(0x0041) );
 			points=points*50/32;
 		break;
-		case GALAGA:
+		case GALAGA: //ok
 			points = (FCEU_CheatGetByte(0x00e0) * 1000000) +
 				(FCEU_CheatGetByte(0x00e1) * 100000) +
 				(FCEU_CheatGetByte(0x00e2) * 10000) +
@@ -481,10 +525,15 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x00e5) * 10) +
 				(FCEU_CheatGetByte(0x00e6) * 1);
 		break;
-		case GRADIUS: //NEEDS TO BE CHECKED AGAIN
-
+		case GRADIUS: //ok
+			points = (FCEU_CheatGetByte(0x07e6)/16 * 100000) +
+				(FCEU_CheatGetByte(0x07e6)%16 * 10000) +
+				(FCEU_CheatGetByte(0x07e5)/16 * 1000) +
+				(FCEU_CheatGetByte(0x07e5)%16 * 100) +
+				(FCEU_CheatGetByte(0x07e4)/16 * 10) +
+				(FCEU_CheatGetByte(0x07e4)%16 * 1);
 		break;
-		case GUNSMOKE:
+		case GUNSMOKE: //ok
 			points = ((FCEU_CheatGetByte(0x06f2)-88) * 100000) +
 				((FCEU_CheatGetByte(0x06f4)-88) * 10000) +
 				((FCEU_CheatGetByte(0x06f6)-88) * 1000) +
@@ -492,17 +541,17 @@ int NESInterface::Impl::getPoints(){
 				((FCEU_CheatGetByte(0x06fa)-88) * 10) +
 				((FCEU_CheatGetByte(0x06fc)-88) * 1);
 		break;
-		case HUDSONS_ADVENTURE_ISLAND:
-			points = (((FCEU_CheatGetByte(0x069b)+11)==-1?0:(FCEU_CheatGetByte(0x069b)+11)) * 10000000) +
-				(((FCEU_CheatGetByte(0x069c)+11)==-1?0:(FCEU_CheatGetByte(0x069c)+11)) * 1000000) +
-				(((FCEU_CheatGetByte(0x069d)+11)==-1?0:(FCEU_CheatGetByte(0x069d)+11)) * 100000) +
-				(((FCEU_CheatGetByte(0x069e)+11)==-1?0:(FCEU_CheatGetByte(0x069e)+11)) * 10000) +
-				(((FCEU_CheatGetByte(0x069f)+11)==-1?0:(FCEU_CheatGetByte(0x069f)+11)) * 1000) +
-				(((FCEU_CheatGetByte(0x06a0)+11)==-1?0:(FCEU_CheatGetByte(0x06a0)+11)) * 100) +
-				(((FCEU_CheatGetByte(0x06a1)+11)==-1?0:(FCEU_CheatGetByte(0x06a1)+11)) * 10) +
-				(((FCEU_CheatGetByte(0x06a2)+11)==-1?0:(FCEU_CheatGetByte(0x06a2)+11))* 1);
+		case HUDSONS_ADVENTURE_ISLAND: //ok
+			points = ((FCEU_CheatGetByte(0x069b)==255?0:(FCEU_CheatGetByte(0x069b)-245)) * 10000000) +
+				((FCEU_CheatGetByte(0x069c)==255?0:(FCEU_CheatGetByte(0x069c)-245)) * 1000000) +
+				((FCEU_CheatGetByte(0x069d)==255?0:(FCEU_CheatGetByte(0x069d)-245)) * 100000) +
+				((FCEU_CheatGetByte(0x069e)==255?0:(FCEU_CheatGetByte(0x069e)-245)) * 10000) +
+				((FCEU_CheatGetByte(0x069f)==255?0:(FCEU_CheatGetByte(0x069f)-245)) * 1000) +
+				((FCEU_CheatGetByte(0x06a0)==255?0:(FCEU_CheatGetByte(0x06a0)-245)) * 100) +
+				((FCEU_CheatGetByte(0x06a1)==255?0:(FCEU_CheatGetByte(0x06a1)-245)) * 10) +
+				((FCEU_CheatGetByte(0x06a2)==255?0:(FCEU_CheatGetByte(0x06a2)-245))* 1);
 		break;
-		case JOUST:
+		case JOUST: //ok
 			points = (FCEU_CheatGetByte(0x00ed)/16 * 100000) +
 				(FCEU_CheatGetByte(0x00ed)%16 * 10000) +
 				(FCEU_CheatGetByte(0x00ec)/16 * 1000) +
@@ -510,29 +559,29 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x00eb)/16 * 10) +
 				(FCEU_CheatGetByte(0x00eb)%16 * 1);
 		break;
-		case KUNGFU:
-			points = (FCEU_CheatGetByte(0x0531) * 1000000) +
+		case KUNGFU: //ok
+			points = 100*(FCEU_CheatGetByte(0x0531) * 1000000) +
 				(FCEU_CheatGetByte(0x0532) * 10000) +
 				(FCEU_CheatGetByte(0x0533) * 100) +
 				(FCEU_CheatGetByte(0x0534) * 1);
 		break;
-		case LIFEFORCE:
-			points = (FCEU_CheatGetByte(0x00e6)/16 * 100000) +
-				(FCEU_CheatGetByte(0x00e6)%16 * 10000) +
-				(FCEU_CheatGetByte(0x00e5)/16 * 1000) +
-				(FCEU_CheatGetByte(0x00e5)%16 * 100) +
-				(FCEU_CheatGetByte(0x00e4)/16 * 10) +
-				(FCEU_CheatGetByte(0x00e4)%16 * 1);
+		case LIFEFORCE: //ok
+			points = (FCEU_CheatGetByte(0x07e6)/16 * 100000) +
+				(FCEU_CheatGetByte(0x07e6)%16 * 10000) +
+				(FCEU_CheatGetByte(0x07e5)/16 * 1000) +
+				(FCEU_CheatGetByte(0x07e5)%16 * 100) +
+				(FCEU_CheatGetByte(0x07e4)/16 * 10) +
+				(FCEU_CheatGetByte(0x07e4)%16 * 1);
 		break;
-		case MACH_RIDER:
-			points = (FCEU_CheatGetByte(0x0000) * 10000) +
+		case MACH_RIDER: //ok with 100 mult factor
+			points = 100*((FCEU_CheatGetByte(0x0000) * 10000) +
 				(FCEU_CheatGetByte(0x0001) * 1000) +
 				(FCEU_CheatGetByte(0x0002) * 100) +
 				(FCEU_CheatGetByte(0x0003) * 10) +
-				(FCEU_CheatGetByte(0x0004) * 1);
+				(FCEU_CheatGetByte(0x0004) * 1));
 		
 		break;
-		case PUNCH_OUT:
+		case PUNCH_OUT: //ok
 			points = (FCEU_CheatGetByte(0x03e8) * 100000) +
 				(FCEU_CheatGetByte(0x03e9) * 10000) +
 				(FCEU_CheatGetByte(0x03ea) * 1000) +
@@ -540,24 +589,24 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x03ec) * 10) +
 				(FCEU_CheatGetByte(0x03ed) * 1);
 		break;
-		case RAD_RACER:
+		case RAD_RACER: //ok
 			points = ((FCEU_CheatGetByte(0x0563)-48) * 10000) +
 				((FCEU_CheatGetByte(0x0564)-48) * 1000) +
 				((FCEU_CheatGetByte(0x0565)-48) * 100) +
 				((FCEU_CheatGetByte(0x0566)-48) * 10) +
 				((FCEU_CheatGetByte(0x0567)-48) * 1);
 		break;
-		case RAMPAGE:
-			points = (FCEU_CheatGetByte(0x0119)<0)?0:(FCEU_CheatGetByte(0x0119) * 10000000) +
-				(FCEU_CheatGetByte(0x011a)<0)?0:(FCEU_CheatGetByte(0x011a) * 1000000) +
-				(FCEU_CheatGetByte(0x011b)<0)?0:(FCEU_CheatGetByte(0x011b) * 100000) +
-				(FCEU_CheatGetByte(0x011c)<0)?0:(FCEU_CheatGetByte(0x011c) * 10000) +
-				(FCEU_CheatGetByte(0x011d)<0)?0:(FCEU_CheatGetByte(0x011d) * 1000) +
-				(FCEU_CheatGetByte(0x011e)<0)?0:(FCEU_CheatGetByte(0x011e) * 100) +
-				(FCEU_CheatGetByte(0x011f)<0)?0:(FCEU_CheatGetByte(0x011f) * 10) +
-				(FCEU_CheatGetByte(0x0120)<0)?0:(FCEU_CheatGetByte(0x0120) * 1);
+		case RAMPAGE: //ok
+			points = ((FCEU_CheatGetByte(0x0119)==255)?0:(FCEU_CheatGetByte(0x0119)) * 10000000) +
+				((FCEU_CheatGetByte(0x011a)==255)?0:(FCEU_CheatGetByte(0x011a)) * 1000000) +
+				((FCEU_CheatGetByte(0x011b)==255)?0:(FCEU_CheatGetByte(0x011b)) * 100000) +
+				((FCEU_CheatGetByte(0x011c)==255)?0:(FCEU_CheatGetByte(0x011c)) * 10000) +
+				((FCEU_CheatGetByte(0x011d)==255)?0:(FCEU_CheatGetByte(0x011d)) * 1000) +
+				((FCEU_CheatGetByte(0x011e)==255)?0:(FCEU_CheatGetByte(0x011e)) * 100) +
+				((FCEU_CheatGetByte(0x011f)==255)?0:(FCEU_CheatGetByte(0x011f)) * 10) +
+				((FCEU_CheatGetByte(0x0120)==255)?0:(FCEU_CheatGetByte(0x0120)) * 1);
 		break;
-		case SPY_HUNTER:
+		case SPY_HUNTER: //ok
 			points = (FCEU_CheatGetByte(0x0123) * 100000) +
 				(FCEU_CheatGetByte(0x0124) * 10000) +
 				(FCEU_CheatGetByte(0x0125) * 1000) +
@@ -566,12 +615,13 @@ int NESInterface::Impl::getPoints(){
 				(FCEU_CheatGetByte(0x0128) * 1);
 		break;
 	}
+	//printf("points so far: %d\n", points);
 	return points;
 }
 
 int NESInterface::Impl::act(int action) {
 
-	printf("acted %d\n", action);
+	//printf("acted %d\n", action);
 
 	// Calculate lives.
 	remaining_lives = NESInterface::Impl::getLives();
@@ -582,7 +632,10 @@ int NESInterface::Impl::act(int action) {
 	//game_state = FCEU_CheatGetByte(0x0770);
 
 	//TODO: check for invalid input
-	nes_input = allowedActions[curGame][action];
+	nes_input = mappedActions[action];
+
+	//printf("action: %d\n", action);
+	//printf("nes input: %d\n", nes_input);
 
 	uint8 *gfx;
 	int32 *sound;
@@ -649,7 +702,12 @@ NESInterface::Impl::Impl(const std::string &rom_file) :
 
 	//TODO: error handling
 	//		check name of file, probably ".zip" added, or maybe even fullpath
-	curGame = allowedGames[rom_file];
+
+	printf("roms name is %s\n", rom_file.substr(rom_file.find_last_of("/")+1).c_str());
+
+	//trims the file path until to store just the name of the rom, our identifier
+	curGame = allowedGames[rom_file.substr(rom_file.find_last_of("/")+1)];
+	printf("curgame is %d\n", curGame);
 
 	// Initialize some configuration variables.
 	static int inited = 0;
@@ -1059,7 +1117,7 @@ void NESInterface::Impl::initializeGamesData(){
 				
 				break;
 				case PUNCH_OUT:
-					if(	j == ACT_NOOP ||
+					if(	//j == ACT_NOOP || not necessary since we have start, lesser complexity
 					    j == ACT_LEFT ||
 					    j == ACT_RIGHT ||
 					    j == ACT_DOWN ||
@@ -1149,7 +1207,7 @@ bool NESInterface::loadState() {
 }
 
 bool NESInterface::gameOver() {
-    return m_pimpl->game_over();
+    return m_pimpl->gameOver();
 }
 
 void NESInterface::resetGame() {

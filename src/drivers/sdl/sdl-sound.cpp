@@ -38,7 +38,7 @@ static unsigned int s_BufferRead;
 static unsigned int s_BufferWrite;
 static volatile unsigned int s_BufferIn;
 
-static int s_mute = 0;
+static int s_mute = 1;
 
 
 /**
