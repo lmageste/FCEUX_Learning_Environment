@@ -1013,7 +1013,8 @@ void NESInterface::Impl::initializeGamesData(){
 					    j == ACT_A_B_DOWN_RIGHT ||
 					    j == ACT_A_B_DOWN_LEFT ||
 					    j == ACT_A_B_UP_RIGHT ||
-					    j == ACT_A_B_UP_LEFT
+					    j == ACT_A_B_UP_LEFT ||
+					    j == ACT_SELECT
 					)
 					    allowedActions[i][j] = 1;
 					else
