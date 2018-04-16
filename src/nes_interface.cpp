@@ -149,7 +149,7 @@ bool NESInterface::Impl::gameOver() {
 	if (game_state == 1) return false;
 
 	// Reset the score and position.
-	current_game_score = 0;
+	//current_game_score = 0;
 	//current_x = 0;
 	return true;
 }
@@ -164,7 +164,7 @@ void NESInterface::Impl::reset_game() {
 	//current_x = 0;
 	episode_frame_number = 0;
 
-	printf("!!!Game Reseted: number %d\n", curGame);
+	//printf("!!!Game Reseted: number %d\n", curGame);
 
 	// Run a few frames first to get to the startup screen.
 	for (int i = 0; i<60; i++) {
@@ -676,9 +676,9 @@ int NESInterface::Impl::act(int action) {
 	int reward = new_score - current_game_score;
 
 	// Handle negative scores.
-	if (reward < 0) {
+	/*if (reward < 0) {
 			reward = 0;
-	}
+	}*/
 	current_game_score = new_score;
 
 	// Add reward based on position.
